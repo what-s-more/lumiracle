@@ -3,6 +3,7 @@ import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { highlightMarkdown } from '@/lib/shiki-highlight';
 import MagicDivider from '@/components/MagicDivider';
 import PostAsk from '@/components/PostAsk';
+import PostComments from '@/components/PostComments';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Tag, Clock } from 'lucide-react';
 
@@ -70,6 +71,8 @@ export default async function PostPage({ params }: PageProps) {
         <MarkdownRenderer content={highlightedContent} />
 
         <PostAsk slug={post.slug} title={post.title} />
+
+        <PostComments slug={post.slug} />
       </article>
     </div>
   );

@@ -32,6 +32,20 @@ export const DASHBOARD_LABELS = {
   backHome: '返回星穹殿堂',
 } as const;
 
+/** 文章评论（T6）文案 */
+export const COMMENT_LABELS = {
+  title: '留言',
+  empty: '还没有留言，来做第一个吧',
+  authorPlaceholder: '昵称',
+  contentPlaceholder: '写下你的想法…',
+  submit: '发送',
+  adminEntry: '管理',
+  adminTokenPlaceholder: '管理令牌',
+  adminHint: '输入管理令牌后可删除违规评论',
+  delete: '删除',
+  deleteConfirm: '确定删除这条评论？',
+} as const;
+
 /** 站内 RAG 问答（T3）文案 */
 export const ASK_LABELS = {
   entry: '星辉问询',
