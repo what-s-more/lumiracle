@@ -1,7 +1,8 @@
 import { getPostsGroupedByYear } from '@/lib/posts';
-import { Mail, Globe } from 'lucide-react';
+import { Mail, Globe, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import MagicDivider from '@/components/MagicDivider';
+import { DASHBOARD_LABELS } from '@/lib/site-config';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -37,6 +38,10 @@ export default function AboutPage() {
             className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground border border-border rounded-full hover:border-accent hover:text-accent transition-colors">
             <Globe className="w-4 h-4" /><span>GitHub</span>
           </a>
+          <Link href="/dashboard/"
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground border border-border rounded-full hover:border-accent hover:text-accent transition-colors">
+            <BarChart3 className="w-4 h-4" /><span>{DASHBOARD_LABELS.entry}</span>
+          </Link>
         </div>
 
         {/* 魔法分隔线 */}

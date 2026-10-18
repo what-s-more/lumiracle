@@ -17,6 +17,21 @@ export const FOOTER_LABELS = {
   runningDays: '本站已守护',
 } as const;
 
+/** 阅读数据看板（T5）文案 */
+export const DASHBOARD_LABELS = {
+  entry: '阅读数据',
+  title: '阅读数据',
+  subtitle: '基于站内阅读事件的真实访问统计',
+  pv: '浏览量 PV',
+  uv: '访客数 UV',
+  dailyTitle: '每日趋势',
+  referrerTitle: '来源分布',
+  articleTitle: '文章排行',
+  empty: '暂无数据，先浏览站内页面后再回来看看',
+  refresh: '刷新',
+  backHome: '返回星穹殿堂',
+} as const;
+
 /** 站内 RAG 问答（T3）文案 */
 export const ASK_LABELS = {
   entry: '星辉问询',
