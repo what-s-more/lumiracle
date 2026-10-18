@@ -6,7 +6,8 @@ import { useState, useEffect } from 'react';
 import { m, AnimatePresence } from 'motion/react';
 import SearchDialog from './SearchDialog';
 import ThemeToggle from './ThemeToggle';
-import { NAV_LINKS } from '@/lib/site-config';
+import { openAskDialog } from './AskDialog';
+import { NAV_LINKS, ASK_LABELS } from '@/lib/site-config';
 import { usePathname } from 'next/navigation';
 import type { SearchIndexItem } from '@/lib/posts';
 
@@ -63,11 +64,20 @@ export default function Header({ searchIndex }: HeaderProps) {
                   ⌘K
                 </kbd>
               </button>
+              <button type="button" onClick={() => openAskDialog()}
+                className="flex items-center gap-2 px-3 py-1.5 text-sm text-muted-foreground bg-muted border border-border rounded-lg hover:border-accent hover:text-accent transition-colors">
+                <span className="text-accent">✦</span>
+                <span>{ASK_LABELS.entry}</span>
+              </button>
               <ThemeToggle />
             </div>
 
             <div className="flex md:hidden items-center gap-1">
               <ThemeToggle />
+              <button type="button" onClick={() => openAskDialog()} aria-label={ASK_LABELS.entry}
+                className="p-2 rounded-lg text-accent hover:bg-muted transition-colors">
+                <span className="text-lg leading-none">✦</span>
+              </button>
               <button type="button" onClick={() => setIsSearchOpen(true)}
                 className="p-2 rounded-lg text-muted-foreground hover:bg-muted transition-colors">
                 <Search className="w-5 h-5" />

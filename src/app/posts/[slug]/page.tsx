@@ -2,6 +2,7 @@ import { getAllPostSlugs, getPostData } from '@/lib/posts';
 import MarkdownRenderer from '@/components/MarkdownRenderer';
 import { highlightMarkdown } from '@/lib/shiki-highlight';
 import MagicDivider from '@/components/MagicDivider';
+import PostAsk from '@/components/PostAsk';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, Tag, Clock } from 'lucide-react';
 
@@ -67,6 +68,8 @@ export default async function PostPage({ params }: PageProps) {
         <MagicDivider />
 
         <MarkdownRenderer content={highlightedContent} />
+
+        <PostAsk slug={post.slug} title={post.title} />
       </article>
     </div>
   );

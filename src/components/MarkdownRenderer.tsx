@@ -1,11 +1,31 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import type { ReactNode } from 'react';
 import MarkdownImage from './MarkdownImage';
 import CodeBlock from './CodeBlock';
+// 与索引构建（scripts/lib/chunk.mjs）共用同一套标题锚点算法，保证引用链接能命中段落
+import { slugifyHeading } from '../../scripts/lib/chunk.mjs';
 
 interface MarkdownRendererProps {
   content: string;
+}
+
+/** 从 React 节点中提取纯文本，用于生成标题锚点。 */
+function textOf(node: ReactNode): string {
+  if (typeof node === 'string' || typeof node === 'number') return String(node);
+  if (Array.isArray(node)) return node.map(textOf).join('');
+  if (node && typeof node === 'object' && 'props' in node) {
+    return textOf((node as { props: { children?: ReactNode } }).props.children);
+  }
+  return '';
+}
+
+/** 为标题补 `id`（与索引锚点一致），使问答引用可点击跳转到对应段落。 */
+function headingWithAnchor(Tag: 'h1' | 'h2' | 'h3' | 'h4' | 'h5' | 'h6') {
+  return function Heading({ children }: { children?: ReactNode }) {
+    return <Tag id={slugifyHeading(textOf(children)) || 'top'}>{children}</Tag>;
+  };
 }
 
 export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
@@ -29,6 +49,12 @@ export default function MarkdownRenderer({ content }: MarkdownRendererProps) {
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw]}
         components={{
+          h1: headingWithAnchor('h1'),
+          h2: headingWithAnchor('h2'),
+          h3: headingWithAnchor('h3'),
+          h4: headingWithAnchor('h4'),
+          h5: headingWithAnchor('h5'),
+          h6: headingWithAnchor('h6'),
           img: ({ src, alt }) => <MarkdownImage src={typeof src === 'string' ? src : ''} alt={alt || ''} />,
           pre: ({ children }) => <CodeBlock>{children}</CodeBlock>,
           p: ({ children, node }) => {

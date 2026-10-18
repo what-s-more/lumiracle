@@ -268,3 +268,39 @@ pre [datafilename] {
   border-radius: 8px;
   box-shadow: 0 0 40px var(--glow);
 }
+
+/* 问答弹窗（T3）—— 仅新增，不改动既有变量与类 */
+@keyframes ask-caret-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.ask-caret {
+  display: inline-block;
+  width: 0.5rem;
+  height: 1em;
+  margin-left: 0.125rem;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: ask-caret-blink 1s steps(1, end) infinite;
+}
+
+.ask-source-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--muted-foreground);
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.ask-source-chip:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+

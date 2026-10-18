@@ -10,6 +10,7 @@ import Lightbox from "@/components/Lightbox";
 import PageTransition from "@/components/PageTransition";
 import ThemeProvider from "@/components/ThemeProvider";
 import ParticleCanvas from "@/components/ParticleCanvas";
+import AskDialog from "@/components/AskDialog";
 import { getSearchIndex } from "@/lib/posts";
 import { SITE_NAME, SITE_DESCRIPTION } from "@/lib/site-config";
 import { LazyMotion, domAnimation } from "motion/react";
@@ -72,6 +73,7 @@ export default function RootLayout({
             <Footer />
             <ScrollToTop />
             <Lightbox />
+            <AskDialog />
           </LazyMotion>
         </ThemeProvider>
       </body>
