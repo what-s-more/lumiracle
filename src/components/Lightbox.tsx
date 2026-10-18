@@ -42,7 +42,6 @@ export default function Lightbox() {
           >
             <X className="w-6 h-6" />
           </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <m.img
             src={url}
             alt=""

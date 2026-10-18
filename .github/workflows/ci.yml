@@ -1,0 +1,151 @@
+name: CI
+
+# T7 / M5：lint → 单测(含覆盖率) → 构建(含 Pagefind) → E2E → 部署 → 索引重建
+#
+# 需要仓库已配置 GitHub Secrets（未配置时构建与测试仍可通过，仅 deploy/index 会被跳过或失败）：
+#   CLOUDFLARE_API_TOKEN  —— Workers/Pages 部署与 Vectorize/Workers AI 调用
+#   CLOUDFLARE_ACCOUNT_ID —— 账号 ID
+# 可选：
+#   E2E_BASE_URL          —— 指向已部署预览域名，启用问答/看板 API 断言（见 e2e/api.spec.ts）
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+
+  test:
+    name: Vitest（含覆盖率）
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+
+  build:
+    name: 构建静态导出（含 Pagefind）
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: out
+          path: out/
+          retention-days: 7
+
+  e2e:
+    name: Playwright E2E
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: out
+          path: out
+      - name: 安装 Chromium
+        run: npx playwright install --with-deps chromium
+      # 未设置 E2E_BASE_URL 时仅跑静态路径（scripts/e2e-server.mjs 托管 out/），API 组自动跳过
+      - name: 运行 E2E
+        run: npx playwright test
+        env:
+          E2E_BASE_URL: ${{ vars.E2E_BASE_URL }}
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  deploy:
+    name: 部署 Cloudflare Pages
+    needs: build
+    # 仅主干分支的 push 才部署（未配置 remote/Secrets 前该 job 不会触发）
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: out
+          path: out
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy out --project-name=lumiracle-blog
+
+  index:
+    name: 重建 Vectorize 索引
+    needs: [lint, test]
+    # 仅在主干 push 且 posts/ 有变更时重建，避免无谓的 embedding 消耗
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: 检测 posts/ 变更
+        id: changed
+        run: |
+          before="${{ github.event.before }}"
+          if [ -z "$before" ] || [ "$before" = "0000000000000000000000000000000000000000" ] || ! git cat-file -e "$before" 2>/dev/null; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          elif git diff --quiet "$before" "${{ github.sha }}" -- posts; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: 生成向量并 upsert
+        if: steps.changed.outputs.changed == 'true'
+        run: npm run index
+        env:
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

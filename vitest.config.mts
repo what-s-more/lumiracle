@@ -6,7 +6,8 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html'],
-      include: ['src/lib/**', 'scripts/lib/**'],
+      include: ['src/lib/**', 'scripts/lib/**', 'functions/lib/**', 'functions/api/**'],
+      exclude: ['**/*.test.*', 'functions/api/health.ts'],
     },
   },
 });

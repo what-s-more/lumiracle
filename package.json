@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build && npx pagefind --site out",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test",
     "index": "node scripts/build-index.mjs"
   },
   "dependencies": {

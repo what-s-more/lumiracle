@@ -8,7 +8,7 @@ interface PostCardProps {
   index?: number;
 }
 
-export default function PostCard({ post, featured = false, index = 0 }: PostCardProps) {
+export default function PostCard({ post, featured = false }: PostCardProps) {
   return (
     <article
       className={`bg-card border-l-[3px] border-l-accent rounded-r-xl overflow-hidden transition-all duration-300 hover:shadow-[0_0_12px_var(--glow)] ${
