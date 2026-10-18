@@ -120,12 +120,12 @@ async function listVectorIds() {
 async function deleteByIds(ids) {
   for (let i = 0; i < ids.length; i += 1000) {
     const slice = ids.slice(i, i + 1000);
-    const res = await cfFetch(`/vectorize/v2/indexes/${INDEX_NAME}/delete-by-ids`, {
+    const res = await cfFetch(`/vectorize/v2/indexes/${INDEX_NAME}/delete_by_ids`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ids: slice }),
     });
-    if (!res.ok) throw new Error(`delete-by-ids 失败 ${res.status}: ${await res.text()}`);
+    if (!res.ok) throw new Error(`delete_by_ids 失败 ${res.status}: ${await res.text()}`);
   }
 }
 
@@ -174,7 +174,8 @@ async function main() {
       slice.map((c, k) => ({
         id: c.id,
         values: vectors[k],
-        metadata: { slug: c.slug, title: c.title, anchor: c.anchor, heading: c.heading },
+        // text 一并入库：T2 检索侧需用正文组装上下文（Vectorize v2 metadata 上限 10 KiB，块大小远低于该值）
+        metadata: { slug: c.slug, title: c.title, anchor: c.anchor, heading: c.heading, text: c.text },
       })),
     );
     written += slice.length;
