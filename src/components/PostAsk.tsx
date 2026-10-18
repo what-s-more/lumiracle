@@ -17,7 +17,7 @@ interface PostAskProps {
 
 export default function PostAsk({ slug, title }: PostAskProps) {
   return (
-    <div className="mt-12 pt-8 border-t border-border">
+    <div className="mt-12 pt-8 border-t border-border" data-pagefind-ignore>
       <button
         type="button"
         onClick={() => openAskDialog({ slug, title })}

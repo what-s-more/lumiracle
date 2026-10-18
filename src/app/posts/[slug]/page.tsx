@@ -31,7 +31,7 @@ export default async function PostPage({ params }: PageProps) {
 
   return (
     <div className="relative z-10">
-      <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <article className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12" data-pagefind-body>
         <Link href="/"
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-accent transition-colors mb-8">
           <ArrowLeft className="w-4 h-4" />返回书卷列表
@@ -41,7 +41,7 @@ export default async function PostPage({ params }: PageProps) {
           <div className="flex items-center gap-2 text-sm text-accent font-medium mb-3">
             <Tag className="w-4 h-4" /><span>{post.category}</span>
           </div>
-          <h1 className="text-4xl font-bold text-foreground mb-4">{post.title}</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4" data-pagefind-meta="title">{post.title}</h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4" /><time dateTime={post.date}>{post.date}</time>
