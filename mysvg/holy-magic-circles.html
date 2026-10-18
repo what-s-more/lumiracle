@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>神圣魔法阵设计方案</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cormorant+Garamond:wght@400;600&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a1a 0%, #1a0a2e 50%, #0a1a1a 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #e0e0ff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 3rem;
+            margin-bottom: 20px;
+            background: linear-gradient(90deg, #ffd700, #fff8dc, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+            margin-bottom: 50px;
+            color: #c0c0e0;
+            font-style: italic;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+        }
+
+        .circles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .circle-card {
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 20px;
+            padding: 30px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .circle-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 60px rgba(255, 215, 0, 0.3);
+        }
+
+        .circle-card h2 {
+            text-align: center;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 1.4rem;
+            margin-bottom: 10px;
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .circle-card p {
+            text-align: center;
+            color: #a0a0cc;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            font-family: 'Cormorant Garamond', serif;
+        }
+
+        .circle-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .magic-circle {
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+
+        @keyframes rotate-cw {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes rotate-ccw {
+            from { transform: rotate(360deg); }
+            to { transform: rotate(0deg); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: brightness(1) drop-shadow(0 0 5px currentColor); }
+            50% { filter: brightness(1.5) drop-shadow(0 0 15px currentColor); }
+        }
+
+        @keyframes shimmer {
+            0% { stroke-dashoffset: 0; }
+            100% { stroke-dashoffset: -200; }
+        }
+
+        .rotate-cw {
+            animation: rotate-cw 30s linear infinite;
+            transform-origin: 100px 100px;
+        }
+
+        .rotate-ccw {
+            animation: rotate-ccw 25s linear infinite;
+            transform-origin: 100px 100px;
+        }
+
+        .rotate-cw-mid {
+            animation: rotate-cw 15s linear infinite;
+            transform-origin: 100px 100px;
+        }
+
+        .rotate-ccw-mid {
+            animation: rotate-ccw 18s linear infinite;
+            transform-origin: 100px 100px;
+        }
+
+        .rotate-cw-fast {
+            animation: rotate-cw 8s linear infinite;
+            transform-origin: 100px 100px;
+        }
+
+        .rotate-ccw-fast {
+            animation: rotate-ccw 10s linear infinite;
+            transform-origin: 100px 100px;
+        }
+
+        .pulse {
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        .glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: #8888aa;
+            font-size: 0.9rem;
+            font-family: 'Cormorant Garamond', serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✦ 神圣魔法阵设计方案 ✦</h1>
+        <p class="subtitle">纯净光明 · 神圣庄严 · 神圣力量</p>
+
+        <div class="circles-grid">
+            <!-- 方案一：天使圣徽 -->
+            <div class="circle-card">
+                <h2>✦ 天使圣徽 ✦</h2>
+                <p>真正的六芒星与神圣光环的完美融合，散发纯净的神圣之光</p>
+                <div class="circle-container">
+                    <svg width="350" height="350" viewBox="0 0 200 200" class="magic-circle" style="color: #ffd700;">
+                        <defs>
+                            <linearGradient id="holy1" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#fff8dc;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="holy1-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#fff;stop-opacity:0.8" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0.4" />
+                            </linearGradient>
+                            <radialGradient id="holy1-core" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color:#fff;stop-opacity:1" />
+                                <stop offset="40%" style="stop-color:#fff8dc;stop-opacity:0.8" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0" />
+                            </radialGradient>
+                        </defs>
+
+                        <!-- 外圈双环 -->
+                        <g class="rotate-ccw">
+                            <circle cx="100" cy="100" r="95" stroke="url(#holy1)" stroke-width="2" fill="none" />
+                            <circle cx="100" cy="100" r="92" stroke="url(#holy1-glow)" stroke-width="1" fill="none" stroke-dasharray="5 3" />
+                        </g>
+
+                        <!-- 符文环 -->
+                        <g class="rotate-cw">
+                            <circle cx="100" cy="100" r="85" stroke="url(#holy1-glow)" stroke-width="1.5" fill="none" opacity="0.7" />
+                            <circle cx="100" cy="100" r="80" stroke="url(#holy1)" stroke-width="0.8" fill="none" stroke-dasharray="2 4" />
+                        </g>
+
+                        <!-- 神圣符号点 -->
+                        <g class="rotate-ccw-mid">
+                            <circle cx="100" cy="12" r="4" fill="#ffd700" />
+                            <circle cx="188" cy="100" r="4" fill="#ffd700" />
+                            <circle cx="100" cy="188" r="4" fill="#ffd700" />
+                            <circle cx="12" cy="100" r="4" fill="#ffd700" />
+                            <circle cx="163" cy="37" r="3" fill="#fff8dc" />
+                            <circle cx="163" cy="163" r="3" fill="#fff8dc" />
+                            <circle cx="37" cy="163" r="3" fill="#fff8dc" />
+                            <circle cx="37" cy="37" r="3" fill="#fff8dc" />
+                        </g>
+
+                        <!-- 六芒星（两个等边三角形） -->
+                        <g class="glow">
+                            <!-- 向上三角形 -->
+                            <polygon points="100,25 155,137.5 45,137.5" stroke="url(#holy1)" stroke-width="2" fill="none" />
+                            <!-- 向下三角形 -->
+                            <polygon points="100,175 45,62.5 155,62.5" stroke="url(#holy1)" stroke-width="2" fill="none" />
+                        </g>
+
+                        <!-- 内圈 -->
+                        <g class="rotate-cw-fast">
+                            <circle cx="100" cy="100" r="55" stroke="url(#holy1-glow)" stroke-width="1.5" fill="none" />
+                            <circle cx="100" cy="100" r="48" stroke="url(#holy1)" stroke-width="1" fill="none" stroke-dasharray="3 5" />
+                        </g>
+
+                        
+
+                        <!-- 中心光球 -->
+                        <g>
+                            <circle cx="100" cy="100" r="25" fill="url(#holy1-core)" />
+                            <circle cx="100" cy="100" r="15" fill="url(#holy1)" opacity="0.8" />
+                            <circle cx="100" cy="100" r="8" fill="#fff" />
+                            <circle cx="97" cy="97" r="3" fill="#fff" opacity="0.9" />
+                        </g>
+
+                        <!-- 旋转符文 -->
+                        <g class="rotate-cw" fill="#ffd700" font-size="7px" font-family="serif">
+                            <text x="100" y="45" text-anchor="middle" opacity="0.8">☉</text>
+                            <text x="155" y="103" text-anchor="middle" opacity="0.8">☿</text>
+                            <text x="100" y="160" text-anchor="middle" opacity="0.8">☉</text>
+                            <text x="45" y="103" text-anchor="middle" opacity="0.8">☿</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+
+            <!-- 方案二：天使之翼 -->
+            <div class="circle-card">
+                <h2>✦ 天使之翼 ✦</h2>
+                <p>展开的神圣羽翼与光环交织，象征天使的神圣庇护</p>
+                <div class="circle-container">
+                    <svg width="350" height="350" viewBox="0 0 200 200" class="magic-circle" style="color: #fff;">
+                        <defs>
+                            <linearGradient id="holy4" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#fff;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#ffd700;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#fff;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="holy4-wing" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:#ffd700;stop-opacity:0.3" />
+                                <stop offset="50%" style="stop-color:#ffd700;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0.3" />
+                            </linearGradient>
+                            <radialGradient id="holy4-center" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color:#fff;stop-opacity:1" />
+                                <stop offset="40%" style="stop-color:#fff8dc;stop-opacity:0.9" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0" />
+                            </radialGradient>
+                        </defs>
+
+                        <!-- 外圈 -->
+                        <g class="rotate-ccw">
+                            <circle cx="100" cy="100" r="95" stroke="url(#holy4)" stroke-width="2.5" fill="none" />
+                            <circle cx="100" cy="100" r="90" stroke="url(#holy4)" stroke-width="1" fill="none" opacity="0.6" stroke-dasharray="4 4" />
+                        </g>
+
+                        <!-- 羽翼图案 -->
+                        <g>
+                            <g fill="url(#holy4-wing)" opacity="0.7">
+                                <!-- 左翼 -->
+                                <path d="M100 100 Q60 60 20 80 Q40 90 50 110 Q60 130 100 100" />
+                                <path d="M100 100 Q70 70 35 85 Q50 95 60 115 Q70 130 100 100" />
+                                <path d="M100 100 Q80 80 50 92 Q60 102 68 120 Q75 135 100 100" />
+                                <!-- 右翼 -->
+                                <path d="M100 100 Q140 60 180 80 Q160 90 150 110 Q140 130 100 100" />
+                                <path d="M100 100 Q130 70 165 85 Q150 95 140 115 Q130 130 100 100" />
+                                <path d="M100 100 Q120 80 150 92 Q140 102 132 120 Q125 135 100 100" />
+                            </g>
+                        </g>
+
+                        <!-- 光环 -->
+                        <g class="rotate-ccw-mid">
+                            <circle cx="100" cy="100" r="80" stroke="url(#holy4)" stroke-width="1.5" fill="none" opacity="0.7" />
+                            <circle cx="100" cy="100" r="72" stroke="#ffd700" stroke-width="1" fill="none" stroke-dasharray="3 5" />
+                        </g>
+
+                        <!-- 六芒星（修正版） -->
+                        <g class="glow">
+                            <polygon points="100,25 155,137.5 45,137.5" stroke="url(#holy4)" stroke-width="1.5" fill="none" />
+                            <polygon points="100,175 45,62.5 155,62.5" stroke="url(#holy4)" stroke-width="1.5" fill="none" />
+                        </g>
+
+                        <!-- 内圈 -->
+                        <g class="rotate-cw-fast">
+                            <circle cx="100" cy="100" r="55" stroke="url(#holy4)" stroke-width="1.5" fill="none" />
+                        </g>
+                        <g class="rotate-ccw-fast">
+                            <circle cx="100" cy="100" r="45" stroke="#ffd700" stroke-width="1" fill="none" opacity="0.8" />
+                        </g>
+
+                        <!-- 中心圣光 -->
+                        <g>
+                            <circle cx="100" cy="100" r="30" fill="url(#holy4-center)" />
+                            <circle cx="100" cy="100" r="18" fill="#ffd700" opacity="0.8" />
+                            <circle cx="100" cy="100" r="10" fill="#fff" />
+                        </g>
+
+                        <!-- 装饰光点 -->
+                        <g class="rotate-cw">
+                            <circle cx="100" cy="10" r="4" fill="#ffd700" />
+                            <circle cx="190" cy="100" r="4" fill="#ffd700" />
+                            <circle cx="100" cy="190" r="4" fill="#ffd700" />
+                            <circle cx="10" cy="100" r="4" fill="#ffd700" />
+                            <circle cx="160" cy="40" r="3" fill="#fff" opacity="0.8" />
+                            <circle cx="160" cy="160" r="3" fill="#fff" opacity="0.8" />
+                            <circle cx="40" cy="160" r="3" fill="#fff" opacity="0.8" />
+                            <circle cx="40" cy="40" r="3" fill="#fff" opacity="0.8" />
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- 方案三：新天使圣徽 -->
+            <div class="circle-card">
+                <h2>✦ 新天使圣徽 ✦</h2>
+                <p>多层圆形包裹的神圣徽章，散发神圣光芒</p>
+                <div class="circle-container">
+                    <svg width="350" height="350" viewBox="0 0 200 200" class="magic-circle" style="color: #ffd700;">
+                        <defs>
+                            <linearGradient id="holy5" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#ffd700;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#fff;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:1" />
+                            </linearGradient>
+                            <linearGradient id="holy5-light" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#fff8dc;stop-opacity:0.8" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0.4" />
+                            </linearGradient>
+                            <radialGradient id="holy5-core" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" style="stop-color:#fff;stop-opacity:1" />
+                                <stop offset="60%" style="stop-color:#ffd700;stop-opacity:0.8" />
+                                <stop offset="100%" style="stop-color:#ffd700;stop-opacity:0" />
+                            </radialGradient>
+                        </defs>
+
+                        <!-- 外圈 -->
+                        <g class="rotate-ccw">
+                            <circle cx="100" cy="100" r="95" stroke="url(#holy5)" stroke-width="3" fill="none" />
+                            <circle cx="100" cy="100" r="90" stroke="url(#holy5-light)" stroke-width="1" fill="none" />
+                        </g>
+
+                        <!-- 第二层环 -->
+                        <g class="rotate-cw">
+                            <circle cx="100" cy="100" r="82" stroke="url(#holy5)" stroke-width="2" fill="none" opacity="0.8" />
+                            <circle cx="100" cy="100" r="78" stroke="url(#holy5-light)" stroke-width="1" fill="none" stroke-dasharray="4 3" />
+                        </g>
+
+                        <!-- 装饰点 -->
+                        <g class="rotate-ccw-mid">
+                            <g fill="#ffd700">
+                                <circle cx="100" cy="10" r="5" />
+                                <circle cx="190" cy="100" r="5" />
+                                <circle cx="100" cy="190" r="5" />
+                                <circle cx="10" cy="100" r="5" />
+                            </g>
+                            <g fill="#fff" opacity="0.9">
+                                <circle cx="163" cy="37" r="3" />
+                                <circle cx="163" cy="163" r="3" />
+                                <circle cx="37" cy="163" r="3" />
+                                <circle cx="37" cy="37" r="3" />
+                            </g>
+                        </g>
+
+                        <!-- 第三层环 -->
+                        <g class="rotate-cw-fast">
+                            <circle cx="100" cy="100" r="70" stroke="url(#holy5)" stroke-width="1.5" fill="none" opacity="0.7" />
+                        </g>
+
+                        <!-- 六芒星（修正版） -->
+                        <g class="glow">
+                            <polygon points="100,30 150,130 50,130" stroke="url(#holy5)" stroke-width="2" fill="none" />
+                            <polygon points="100,170 50,70 150,70" stroke="url(#holy5)" stroke-width="2" fill="none" />
+                        </g>
+
+                        <!-- 第四层环 -->
+                        <g class="rotate-ccw-fast">
+                            <circle cx="100" cy="100" r="55" stroke="url(#holy5)" stroke-width="1.5" fill="none" />
+                            <circle cx="100" cy="100" r="48" stroke="url(#holy5-light)" stroke-width="1" fill="none" stroke-dasharray="3 4" />
+                        </g>
+
+                        <!-- 中心圣光 -->
+                        <g>
+                            <circle cx="100" cy="100" r="25" fill="url(#holy5-core)" />
+                            <circle cx="100" cy="100" r="12" fill="#ffd700" opacity="0.9" />
+                            <circle cx="100" cy="100" r="6" fill="#fff" />
+                        </g>
+
+                        <!-- 旋转符文 -->
+                        <g class="rotate-cw" fill="#ffd700" font-size="8px" font-family="serif">
+                            <text x="100" y="42" text-anchor="middle" opacity="0.8">❋</text>
+                            <text x="158" y="103" text-anchor="middle" opacity="0.8">❋</text>
+                            <text x="100" y="164" text-anchor="middle" opacity="0.8">❋</text>
+                            <text x="42" y="103" text-anchor="middle" opacity="0.8">❋</text>
+                        </g>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>✨ 三种神圣主题魔法阵设计，外圈尺寸统一，视觉华丽震撼 ✨</p>
+        </div>
+    </div>
+</body>
+</html>

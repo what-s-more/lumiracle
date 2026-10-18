@@ -1,0 +1,21 @@
+name = "lumiracle-blog"
+compatibility_date = "2026-10-01"
+pages_build_output_dir = "out"
+
+# 文章向量索引（RAG 检索）
+# remote = true：Vectorize 不支持本地模拟，本地开发/冒烟需连接远程资源
+[[vectorize]]
+binding = "VECTORIZE"
+index_name = "posts"
+remote = true
+
+# 阅读事件 / 评论
+[[d1_databases]]
+binding = "DB"
+database_name = "lumiracle"
+database_id = "b46d9f46-ea9b-4b9b-977d-d0b8db0f1a73"
+remote = true
+
+# Workers AI（embedding + 生成）
+[ai]
+binding = "AI"
