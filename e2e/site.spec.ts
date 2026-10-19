@@ -17,7 +17,8 @@ test.describe('静态站点关键路径', () => {
     await page.goto('/');
     await page.locator('a[href="/posts/nextjs-static-export/"]').first().click();
     await expect(page).toHaveURL(/\/posts\/nextjs-static-export\/$/);
-    await expect(page.getByRole('heading', { level: 1 })).toContainText('Next.js 静态导出');
+    // 页面存在两个 h1（站点标题 + 文章标题），取文章主标题断言
+    await expect(page.getByRole('heading', { level: 1 }).last()).toContainText('Next.js 静态导出');
   });
 
   test('Pagefind 全文搜索命中文章', async ({ page }) => {
