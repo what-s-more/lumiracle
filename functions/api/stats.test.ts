@@ -93,12 +93,14 @@ const get = (query: string, env: Record<string, unknown>) =>
   onRequestGet({ env: env as never, request: new Request(`http://localhost/api/stats${query}`) });
 
 describe('stats GET 聚合', () => {
+  // recentDays() 以 UTC 日期为基准生成日期序列，测试数据须用同一基准，否则跨时区必挂
+  const todayStr = new Date().toISOString().slice(0, 10);
   const resolver = (sql: string) => {
     if (sql.includes('COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv FROM events WHERE ts')) {
       return { results: [{ pv: 10, uv: 4 }] };
     }
     if (sql.includes("date(ts, 'unixepoch')")) {
-      return { results: [{ day: '2026-10-18', pv: 3, uv: 2 }] };
+      return { results: [{ day: todayStr, pv: 3, uv: 2 }] };
     }
     if (sql.includes('COALESCE')) {
       return { results: [{ source: 'direct', pv: 6, uv: 3 }] };
@@ -122,7 +124,7 @@ describe('stats GET 聚合', () => {
     expect(body.range.days).toBe(3);
     expect(body.totals).toEqual({ pv: 10, uv: 4 });
     expect(body.daily).toHaveLength(3); // 补零到 3 天
-    expect(body.daily.at(-1)).toEqual({ day: '2026-10-18', pv: 3, uv: 2 });
+    expect(body.daily.at(-1)).toEqual({ day: todayStr, pv: 3, uv: 2 });
     expect(body.referrers[0].source).toBe('direct');
     expect(body.articles[0].slug).toBe('hello-world');
   });
