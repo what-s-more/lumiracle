@@ -116,69 +116,84 @@ export async function onRequestPost(context: StatsContext): Promise<Response> {
   return new Response(null, { status: 204 });
 }
 
+export interface StatsAggregate {
+  range: { days: number; since: number };
+  totals: { pv: number; uv: number };
+  daily: DailyRow[];
+  referrers: Array<{ source: string; pv: number; uv: number }>;
+  articles: Array<{ slug: string; pv: number; uv: number }>;
+  updatedAt: string;
+}
+
+/**
+ * 聚合最近 days 天的阅读数据（GET /api/stats 与 Agent 工具 get_stats 共用）。
+ * 按日期补齐空档，避免图表出现断点。
+ */
+export async function collectStats(env: StatsEnv, days: number): Promise<StatsAggregate> {
+  const since = nowSeconds() - days * 86_400;
+  const { DB } = env;
+
+  const totalsRow = await DB.prepare(
+    'SELECT COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv FROM events WHERE ts >= ?',
+  )
+    .bind(since)
+    .all<{ pv: number; uv: number }>();
+
+  const dailyRows = await DB.prepare(
+    `SELECT date(ts, 'unixepoch') AS day, COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv
+       FROM events WHERE ts >= ? GROUP BY day`,
+  )
+    .bind(since)
+    .all<DailyRow>();
+
+  const sourceRows = await DB.prepare(
+    `SELECT COALESCE(NULLIF(referrer, ''), 'direct') AS source, COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv
+       FROM events WHERE ts >= ? GROUP BY source ORDER BY pv DESC LIMIT 10`,
+  )
+    .bind(since)
+    .all<SourceRow>();
+
+  const articleRows = await DB.prepare(
+    `SELECT article_slug AS slug, COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv
+       FROM events
+      WHERE ts >= ? AND article_slug IS NOT NULL AND article_slug != ''
+      GROUP BY slug ORDER BY pv DESC LIMIT 20`,
+  )
+    .bind(since)
+    .all<ArticleRow>();
+
+  const totals = totalsRow.results?.[0] ?? { pv: 0, uv: 0 };
+
+  // 按日期补齐，避免图表出现空档
+  const byDay = new Map((dailyRows.results ?? []).map((row) => [row.day, row]));
+  const daily = recentDays(days).map((day) => byDay.get(day) ?? { day, pv: 0, uv: 0 });
+
+  return {
+    range: { days, since },
+    totals,
+    daily,
+    referrers: (sourceRows.results ?? []).map((row) => ({
+      source: row.source,
+      pv: row.pv,
+      uv: row.uv,
+    })),
+    articles: (articleRows.results ?? []).map((row) => ({
+      slug: row.slug,
+      pv: row.pv,
+      uv: row.uv,
+    })),
+    updatedAt: new Date().toISOString(),
+  };
+}
+
 export async function onRequestGet(context: StatsContext): Promise<Response> {
   const url = new URL(context.request.url);
   const rawDays = Number.parseInt(url.searchParams.get('days') || '', 10);
   const days = Number.isFinite(rawDays) ? Math.min(Math.max(rawDays, 1), MAX_DAYS) : DEFAULT_DAYS;
-  const since = nowSeconds() - days * 86_400;
-  const { DB } = context.env;
 
   try {
-    const totalsRow = await DB.prepare(
-      'SELECT COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv FROM events WHERE ts >= ?',
-    )
-      .bind(since)
-      .all<{ pv: number; uv: number }>();
-
-    const dailyRows = await DB.prepare(
-      `SELECT date(ts, 'unixepoch') AS day, COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv
-         FROM events WHERE ts >= ? GROUP BY day`,
-    )
-      .bind(since)
-      .all<DailyRow>();
-
-    const sourceRows = await DB.prepare(
-      `SELECT COALESCE(NULLIF(referrer, ''), 'direct') AS source, COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv
-         FROM events WHERE ts >= ? GROUP BY source ORDER BY pv DESC LIMIT 10`,
-    )
-      .bind(since)
-      .all<SourceRow>();
-
-    const articleRows = await DB.prepare(
-      `SELECT article_slug AS slug, COUNT(*) AS pv, COUNT(DISTINCT ua_hash) AS uv
-         FROM events
-        WHERE ts >= ? AND article_slug IS NOT NULL AND article_slug != ''
-        GROUP BY slug ORDER BY pv DESC LIMIT 20`,
-    )
-      .bind(since)
-      .all<ArticleRow>();
-
-    const totals = totalsRow.results?.[0] ?? { pv: 0, uv: 0 };
-
-    // 按日期补齐，避免图表出现空档
-    const byDay = new Map((dailyRows.results ?? []).map((row) => [row.day, row]));
-    const daily = recentDays(days).map((day) => byDay.get(day) ?? { day, pv: 0, uv: 0 });
-
-    return Response.json(
-      {
-        ok: true,
-        range: { days, since },
-        totals,
-        daily,
-        referrers: (sourceRows.results ?? []).map((row) => ({
-          source: row.source,
-          pv: row.pv,
-          uv: row.uv,
-        })),
-        articles: (articleRows.results ?? []).map((row) => ({
-          slug: row.slug,
-          pv: row.pv,
-          uv: row.uv,
-        })),
-        updatedAt: new Date().toISOString(),
-      },
-      { headers: { 'Cache-Control': 'no-store' } },
-    );
+    const aggregate = await collectStats(context.env, days);
+    return Response.json({ ok: true, ...aggregate }, { headers: { 'Cache-Control': 'no-store' } });
   } catch (err) {
     return Response.json({ error: `聚合失败：${(err as Error).message}` }, { status: 500 });
   }

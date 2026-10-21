@@ -37,13 +37,23 @@ interface Source {
   score: number;
 }
 
+/** 一次工具调用的展示信息（Agent 查询过程） */
+interface ToolStep {
+  step: number;
+  name: string;
+  summary: string;
+}
+
 type Status = 'idle' | 'streaming' | 'done' | 'error';
 
 interface SseFrame {
-  type: 'sources' | 'delta' | 'error' | 'done';
+  type: 'sources' | 'delta' | 'error' | 'done' | 'tool';
   sources?: Source[];
   text?: string;
   message?: string;
+  step?: number;
+  name?: string;
+  summary?: string;
 }
 
 export default function AskDialog() {
@@ -52,6 +62,7 @@ export default function AskDialog() {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
   const [sources, setSources] = useState<Source[]>([]);
+  const [toolSteps, setToolSteps] = useState<ToolStep[]>([]);
   const [status, setStatus] = useState<Status>('idle');
   const [error, setError] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
@@ -71,6 +82,7 @@ export default function AskDialog() {
       setQuestion('');
       setAnswer('');
       setSources([]);
+      setToolSteps([]);
       setError('');
       setStatus('idle');
       setIsOpen(true);
@@ -115,6 +127,7 @@ export default function AskDialog() {
 
     setAnswer('');
     setSources([]);
+    setToolSteps([]);
     setError('');
     setStatus('streaming');
 
@@ -153,7 +166,10 @@ export default function AskDialog() {
             continue;
           }
           if (frame.type === 'sources') setSources(frame.sources ?? []);
-          else if (frame.type === 'delta' && frame.text) setAnswer((prev) => prev + frame.text);
+          else if (frame.type === 'tool' && frame.name) {
+            const { step, name, summary } = frame;
+            setToolSteps((prev) => [...prev, { step: step ?? prev.length + 1, name, summary: summary ?? name }]);
+          } else if (frame.type === 'delta' && frame.text) setAnswer((prev) => prev + frame.text);
           else if (frame.type === 'error') {
             failed = true;
             setError(frame.message || '问答服务暂时不可用，请稍后重试。');
@@ -191,8 +207,21 @@ export default function AskDialog() {
           </div>
 
           <div ref={answerRef} className="px-5 py-4 overflow-y-auto flex-1">
-            {!answer && !error && (
+            {!answer && !error && toolSteps.length === 0 && (
               <p className="text-sm text-muted-foreground text-center py-6">{ASK_LABELS.idleHint}</p>
+            )}
+
+            {toolSteps.length > 0 && (
+              <div className="mb-4 flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-muted-foreground">{ASK_LABELS.toolTitle}</span>
+                {toolSteps.map((t, i) => (
+                  <span key={`${t.step}-${t.name}-${i}`}
+                    className="text-[11px] text-muted-foreground border border-border rounded-full px-2.5 py-0.5 flex items-center gap-1.5">
+                    <Sparkles className="w-3 h-3 text-accent" />
+                    {t.summary}
+                  </span>
+                ))}
+              </div>
             )}
 
             {(answer || (streaming && !error)) && (

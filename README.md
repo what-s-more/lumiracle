@@ -9,19 +9,20 @@
 | 静态层 | Next.js 16（`output: 'export'`）→ `out/` | 页面在构建期生成，部署到 Cloudflare Pages，无运行时渲染 |
 | 函数层 | `functions/api/*.ts`（Workers 运行时） | 随静态资源一起部署为 Pages Functions，无需独立服务 |
 | 数据层 | Cloudflare Vectorize（文章向量索引）+ D1（阅读事件 / 评论） | Vectorize 维度 1024 / cosine；D1 库名 `lumiracle` |
-| AI | Workers AI（`@cf/baai/bge-m3` 向量 + Llama 3.3 70B 生成） | RAG 检索与生成均在边缘完成 |
+| AI | Workers AI（`@cf/baai/bge-m3` 向量 + Llama 3.3 70B 生成） | 问答为 Agent 工具调用循环：检索 / 统计 / 评论 / 文章清单，均在边缘完成 |
 | 检索 | Pagefind（构建期生成的静态索引） | 关键词精确检索，客户端零后端请求 |
 | 测试 | Vitest（单测）+ Playwright（E2E）+ GitHub Actions | 见下文「测试与覆盖率」 |
 
 分工原则：
 
-- **关键词检索 = Pagefind**（`SearchDialog`），**自然语言问答 = RAG**（`AskDialog` → `POST /api/chat`），两者职责互不重叠。
-- RAG 回答必须携带可点验引用，点击跳转 `/posts/{slug}/#{anchor}` 命中对应段落。
+- **关键词检索 = Pagefind**（`SearchDialog`），**自然语言问答 = Agent 工具调用**（`AskDialog` → `POST /api/chat`），两者职责互不重叠。
+- 回答必须携带可点验引用，点击跳转 `/posts/{slug}/#{anchor}` 命中对应段落。
+- Agent 循环最多 4 步、单步 20s 超时；工具选择与调用过程经 SSE `tool` 帧透出，前端渲染为「查询过程」。
 
 ```
 src/               前端（静态导出）
 functions/api/     Pages Functions：chat / stats / comment / health
-functions/lib/     边缘侧公共逻辑：检索（retrieve）、提示词（prompt）
+functions/lib/     边缘侧公共逻辑：检索（retrieve）、Agent 循环（agent）、工具（tools）
 scripts/           索引构建（build-index）与 E2E 静态服务器（e2e-server）
 posts/             Markdown 文章（RAG 索引的唯一数据源）
 d1/                D1 表结构与迁移
@@ -43,12 +44,12 @@ npm run lint         # ESLint
 ## 测试与覆盖率
 
 ```bash
-npm run test            # Vitest 单测（54 例）
+npm run test            # Vitest 单测（60 例）
 npm run test:coverage   # 带覆盖率报告（coverage/）
 npm run test:e2e        # Playwright E2E（需先 npm run build）
 ```
 
-单测覆盖：语义切分（`scripts/lib/chunk`）、检索与提示词拼装（`functions/lib/*`）、
+单测覆盖：语义切分（`scripts/lib/chunk`）、检索、Agent 循环与工具（`functions/lib/*`）、
 Pagefind slug 解析（`src/lib/search`）、以及 `stats` / `comment` / `chat` 三个接口的入参校验与异常分支。
 
 **最近一次覆盖率（`npm run test:coverage`，2026-10-18）：**
@@ -94,6 +95,21 @@ npx playwright test
 回答含 `[来源: Next.js 静态导出部署到 Cloudflare Pages › 关键配置项 › trailingSlash: true]`。
 
 无据问题示例：`红烧肉怎么做才好吃？` → 明确拒答「根据现有资料无法回答该问题」。
+
+### Agent 评测记录
+
+5 条多步问题（需工具调用才能答好：评论查询、阅读统计、文章清单、语义检索等场景），
+走完整 Agent 循环，连接真实 Workers AI + Vectorize + D1。
+
+**结果（2026-10-21，共 5 条）：**
+
+| 指标 | 结果 |
+|---|---|
+| 工具选择正确率 | 5 / 5 |
+| 回答引用标注（检索型问题） | 2 / 2 |
+
+迭代过程：首轮 4/5——常识型问题模型凭既有知识作答、缺少站内依据；经两轮提示词加固
+（query 关键词风格约束、检索无命中改写重试、常识性回答也须以站内资料为准）后 5/5。
 
 ## 索引构建
 

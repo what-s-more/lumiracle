@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && npx pagefind --site out",
+    "build": "node scripts/gen-posts-meta.mjs && next build && npx pagefind --site out",
     "start": "next start",
     "lint": "eslint .",
     "test": "vitest run",

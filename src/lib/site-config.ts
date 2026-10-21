@@ -52,7 +52,8 @@ export const ASK_LABELS = {
   title: '星辉问询',
   placeholder: '向书卷提问…',
   submit: '提问',
-  idleHint: '基于站内文章回答，并标注引用来源',
+  idleHint: '基于站内文章与数据回答，并标注引用来源',
   scopeHint: '范围：本文',
+  toolTitle: '查询过程',
   disclaimer: '回答由 AI 依据站内文章生成，请以原文为准',
 } as const;

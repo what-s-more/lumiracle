@@ -31,10 +31,24 @@ export interface VectorizeBinding {
   ): Promise<{ matches?: VectorizeMatch[]; count?: number }>;
 }
 
+/** D1 预编译语句（最小接口，run() 必须返回 {success, meta, results} 形状以便读取 last_row_id） */
+export interface D1PreparedStatement {
+  bind(...values: unknown[]): D1PreparedStatement;
+  all<T = unknown>(): Promise<{ results?: T[] }>;
+  run(): Promise<unknown>;
+}
+
+/** D1 绑定 */
+export interface D1Binding {
+  prepare(query: string): D1PreparedStatement;
+}
+
 /** 问答接口所需的环境绑定 */
 export interface ChatEnv {
   AI: AiBinding;
   VECTORIZE: VectorizeBinding;
+  /** D1 绑定：Agent 工具（阅读统计、评论）使用 */
+  DB: D1Binding;
   /** 生成模型名，可通过 Pages 环境变量覆盖 */
   CHAT_MODEL?: string;
 }

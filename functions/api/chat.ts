@@ -1,21 +1,19 @@
 /**
- * RAG 问答接口（T2 / M1-B）
+ * RAG 问答接口（T2 / M1-B → M6 Agent 化）
  *
  * POST /api/chat  { question: string, slug?: string }
- * 返回 SSE 流：首帧 sources（可点验的引用来源）→ 若干 delta 正文 → done。
- * 无命中 / embedding 失败 / 模型超时均返回明确提示，不做空输出。
+ * 返回 SSE 流：
+ *   sources → 若干 tool（工具调用过程）→ delta 正文 → done
+ *   sources 会在每次 search_posts 命中后全量刷新。
  *
- * 生成模型默认 @cf/meta/llama-3.3-70b-instruct-fp8-fast（中文表现与延迟均优于 8b），
- * 可用 Pages 环境变量 CHAT_MODEL 覆盖。
+ * 内部为 Agent 循环（functions/lib/agent.ts）：模型自主决定调用
+ * search_posts / get_stats / list_comments / list_posts，多步推理后回答。
+ * 生成模型默认 @cf/meta/llama-3.3-70b-instruct-fp8-fast，可用 CHAT_MODEL 覆盖。
  */
 
-import { retrieve, type RetrievedChunk } from '../lib/retrieve';
-import { buildMessages, NO_MATCH_REPLY } from '../lib/prompt';
+import { runAgent, AGENT_SYSTEM_PROMPT } from '../lib/agent';
 import type { ChatEnv } from '../lib/types';
 
-const DEFAULT_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
-/** 检索 + 生成的整体时限（毫秒） */
-const TIMEOUT_MS = 25_000;
 /** 单次提问最长字符数 */
 const MAX_QUESTION_LENGTH = 500;
 
@@ -30,7 +28,8 @@ interface ChatContext {
 }
 
 type SseFrame =
-  | { type: 'sources'; sources: Array<Pick<RetrievedChunk, 'slug' | 'title' | 'anchor' | 'heading' | 'score'>> }
+  | { type: 'sources'; sources: Array<{ slug: string; title: string; anchor: string; heading: string; score: number }> }
+  | { type: 'tool'; step: number; name: string; args: Record<string, unknown>; summary: string }
   | { type: 'delta'; text: string }
   | { type: 'error'; message: string }
   | { type: 'done' };
@@ -44,56 +43,6 @@ const SSE_HEADERS: Record<string, string> = {
 
 function sse(obj: SseFrame): Uint8Array {
   return new TextEncoder().encode(`data: ${JSON.stringify(obj)}\n\n`);
-}
-
-/** 在时限内等待 promise，超时抛错。 */
-function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
-  return new Promise<T>((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error(`${label}超时`)), ms);
-    promise.then(
-      (value) => {
-        clearTimeout(timer);
-        resolve(value);
-      },
-      (err) => {
-        clearTimeout(timer);
-        reject(err);
-      },
-    );
-  });
-}
-
-/** 解析 Workers AI 的 SSE 增量流，逐段提取正文并回调。 */
-async function pumpAiStream(
-  stream: ReadableStream<Uint8Array>,
-  onDelta: (text: string) => void,
-): Promise<void> {
-  const reader = stream.getReader();
-  const decoder = new TextDecoder();
-  let buffer = '';
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() ?? '';
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith('data:')) continue;
-      const payload = trimmed.slice(5).trim();
-      if (!payload || payload === '[DONE]') continue;
-      try {
-        const json = JSON.parse(payload) as {
-          choices?: Array<{ delta?: { content?: string } }>;
-          response?: string;
-        };
-        const text = json.choices?.[0]?.delta?.content ?? json.response ?? '';
-        if (text) onDelta(text);
-      } catch {
-        // 忽略无法解析的帧（如心跳）
-      }
-    }
-  }
 }
 
 export async function onRequestPost(context: ChatContext): Promise<Response> {
@@ -113,7 +62,7 @@ export async function onRequestPost(context: ChatContext): Promise<Response> {
   }
 
   const slug = typeof body.slug === 'string' && body.slug.trim() ? body.slug.trim() : undefined;
-  const model = context.env.CHAT_MODEL || DEFAULT_MODEL;
+  const model = context.env.CHAT_MODEL || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -130,55 +79,34 @@ export async function onRequestPost(context: ChatContext): Promise<Response> {
           // 已关闭
         }
       };
-      const fail = (message: string) => {
-        send({ type: 'error', message });
-        finish();
-      };
 
       try {
-        let chunks: RetrievedChunk[] = [];
-        try {
-          chunks = await withTimeout(retrieve(context.env, question, { slug }), TIMEOUT_MS, '检索');
-        } catch (err) {
-          fail(`检索服务暂时不可用（${(err as Error).message}），请稍后重试。`);
-          return;
-        }
-
-        send({
-          type: 'sources',
-          sources: chunks.map(({ slug: s, title, anchor, heading, score }) => ({ slug: s, title, anchor, heading, score })),
-        });
-
-        if (!chunks.length) {
-          send({ type: 'delta', text: NO_MATCH_REPLY });
-          send({ type: 'done' });
-          finish();
-          return;
-        }
-
-        const aiOut = await withTimeout(
-          context.env.AI.run(model, {
-            messages: buildMessages(question, chunks),
-            max_tokens: 1024,
-            stream: true,
-          }),
-          TIMEOUT_MS,
-          '模型响应',
+        await runAgent(
+          context.env,
+          question,
+          { slug, model },
+          {
+            onSources(sources) {
+              if (sources.length) send({ type: 'sources', sources });
+            },
+            onTool(step, name, args, summary) {
+              send({ type: 'tool', step, name, args, summary });
+            },
+            onDelta(text) {
+              send({ type: 'delta', text });
+            },
+          },
         );
-
-        if (!(aiOut instanceof ReadableStream)) {
-          fail('模型未返回流式结果，请稍后重试。');
-          return;
-        }
-
-        await pumpAiStream(aiOut, (text) => send({ type: 'delta', text }));
         send({ type: 'done' });
         finish();
       } catch (err) {
-        fail(`生成失败（${(err as Error).message}），请稍后重试。`);
+        send({ type: 'error', message: `生成失败（${(err as Error).message}），请稍后重试。` });
+        finish();
       }
     },
   });
 
   return new Response(stream, { headers: SSE_HEADERS });
 }
+
+export { AGENT_SYSTEM_PROMPT };
